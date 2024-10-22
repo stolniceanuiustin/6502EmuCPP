@@ -5,10 +5,10 @@ CXX = g++
 CXXFLAGS = -std=c++11 -Wall
 
 # Define the target executable
-TARGET = cpu_program
+TARGET = cpu
 
 # List of source files
-SRCS = main.cpp cpu_core.cpp
+SRCS = main.cpp cpu_core.cpp address_logic.cpp
 
 # List of object files (replacing .cpp with .o)
 OBJS = $(SRCS:.cpp=.o)
@@ -26,4 +26,4 @@ $(TARGET): $(OBJS)
 
 # Clean rule to remove compiled files
 clean:
-	rm -f $(OBJS) $(TARGET)
+	del /Q $(OBJS) $(TARGET)

@@ -8,6 +8,13 @@ struct Mem {
 	int x;
 };
 
+struct Instruction
+{
+	byte aaa;
+	byte bbb;
+	byte cc;
+	byte opcode;
+};
 
 struct CPU
 {
@@ -29,14 +36,17 @@ struct CPU
 	byte O : 1;		//overflow
 	byte N : 1;		//negative 
 
+	Instruction inst;
+	
 
 	bool reset();
-	byte read_byte(byte* address);
+	byte read_pc();
 	void write_byte(byte* address, byte value);
-	uint16_t read_address(byte* ram, byte offset);
-	int execute_cpu();
-	uint16_t read_abs_address(byte* ram, uint16_t offset);
-
+	uint16_t read_address(byte offset);
+	int execute();
+	uint16_t read_abs_address(uint16_t offset);
+	uint16_t compute_addr_mode_g1(bool& page_cross);
+	bool compute_addr_mode_g23(bool &page_cross, byte &address_to_return);
 };
 
 #endif
