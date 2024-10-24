@@ -2,6 +2,8 @@
 #include <iostream>
 using std::cout;
 
+
+const uint16_t null_address = 0;
 // byte CPU::read_byte(byte* address)
 // {
 //     // sleep(CLOCK_TIME);
@@ -32,21 +34,14 @@ uint16_t CPU::read_abs_address(uint16_t offset)
     val |= ram[offset];
     return val;
 }
-// i dont know about this fucntion, might come up later?
-// uint16_t CPU::read_abs_address(byte* ram, uint16_t offset)
-// {
-//     uint16_t val = read_byte(ram + offset + 1);
-//     val <<= 8;
-//     val |= read_byte(ram + offset);
-//     return (val);
-// }
 
-byte CPU::read_pc()
+uint16_t CPU::read_address_from_pc()
 {
-    byte val = ram[PC];
-    PC++;
-    return val;
+    uint16_t address = read_abs_address(PC);
+    PC += 2;
+    return address;
 }
+
 
 bool CPU::reset()
 {
@@ -61,17 +56,105 @@ bool CPU::reset()
     return true;
 }
 
+void CPU::run_instruction_group1(uint16_t address, bool page_cross)
+{
+    //TODO: implement all the functions and implement unit testing: CATCH2 (maybe)
+    switch (inst.aaa)
+    {
+    case 0x0:
+        ORA(address, page_cross);
+        break;
+    case 0x1:
+        AND(address, page_cross);
+        break;
+    case 0x2:
+        EOR(address, page_cross);
+        break;
+    case 0x3:
+        ADC(address, page_cross);
+        break;
+    case 0x4:
+        STA(address);
+        break;
+    case 0x5:
+        LDA(address, page_cross);
+        break;
+    case 0x6:
+        CMP(address, page_cross);
+        break;
+    case 0x7:
+        SBC(address, page_cross);
+        break;
+    }
+}
+
+void CPU::run_instruction_group2(uint16_t address, bool page_cross, bool accumulator)
+{
+    switch (inst.aaa)
+    {
+    case 0x0:
+        ASL(address, accumulator);
+        break;
+    case 0x1:
+        ROL(address, accumulator);
+        break;
+    case 0x2:
+        LSR(address, accumulator);
+        break;
+    case 0x3:
+        ROR(address, accumulator);
+        break;
+    case 0x4:
+        STX(address);
+        break;
+    case 0x5:
+        LDX(address, page_cross);
+        break;
+    case 0x6:
+        DEC(address);
+        break;
+    case 0x7:
+        INC(address);
+        break;
+    }
+}
+
+void CPU::run_instruction_group3(uint16_t address, bool page_cross)
+{
+    uint16_t jump_address = 0;
+    switch (inst.aaa)
+    {
+    case 0x0:
+        printf("INVALID OPCODE \n");
+        break;
+    case 0x1:
+        BIT(address);
+        break;
+    case 0x2:
+        jump_address = read_address_from_pc();
+        JMP_abs(jump_address);
+        break;
+    case 0x3:
+        jump_address = read_address_from_pc();
+        JMP_indirect(jump_address);
+        break;
+    case 0x4:
+        // STY
+        break;
+    case 0x5:
+        // LDY
+        break;
+    case 0x6:
+        // CPY
+        break;
+    case 0x7:
+        // CPX
+        break;
+    }
+}
+
 int CPU::execute()
 {
-    // printf("%d\n", cpu->PC);
-    // //SLEEP CODE(have no idea)
-    // struct timespec ts;
-    // ts.tv_sec = 0;            // Seconds
-    // ts.tv_nsec = 500000000L;  // Nanoseconds (0.5 seconds)
-
-    // nanosleep(&ts, NULL);
-    
-    
     bool onaddress_group2 = false;
     uint16_t offset_address = 0;
     uint16_t original_pc = PC;
@@ -86,6 +169,7 @@ int CPU::execute()
     inst.opcode = read_pc();
     if (inst.opcode == 0)
     {
+        cout << "Opcode shouldn't be 0";
         // printf("%d : Opcode shouldn't be 0\n", cpu->PC);
         return 1;
     }
@@ -93,8 +177,8 @@ int CPU::execute()
     PC += 1;
 
     inst.aaa = (0xE0 & inst.opcode) >> 5; // first 3 bits of the opcode
-    inst.bbb = (0x1C & inst.opcode) >> 2;
-    inst.cc = (0x03 & inst.opcode);
+    inst.bbb = (0x1C & inst.opcode) >> 2; //second 3 bits 
+    inst.cc = (0x03 & inst.opcode);       //last 2 bits 
     byte low_nibble = inst.opcode & 0x0F;
     byte high_nibble = inst.opcode >> 4;
     uint16_t address = 0; //Offset of ram. no longer doing pointer arithmetic
@@ -112,23 +196,25 @@ int CPU::execute()
     {
     case 0x01: // cc = 1
         address = compute_addr_mode_g1(page_cross);
-        run_instruction_group1(address, cpu, page_cross);
+        run_instruction_group1(address, page_cross);
         break;
     case 0x02: // cc = 10
         //Will return address via pointer, the function returns a boolean.
-        onaddress_group2 = compute_addr_mode_g23(&page_cross, &address);
+        onaddress_group2 = compute_addr_mode_g23(page_cross, address);
         if (onaddress_group2 == true)
-            run_instruction_group2(address, cpu, page_cross, 0); // Not accumulator, on address
+            run_instruction_group2(address, page_cross, 0); // Not accumulator, on address
         else
-            run_instruction_group2(NULL, cpu, page_cross, 1); // On accumulator
+            run_instruction_group2(null_address, page_cross, 1); // On accumulator
         break;
     case 0x0: // cc = 00
-        compute_addr_mode_g23(cpu, &page_cross, &offset_address, &address);
-        run_instruction_group3(address, cpu, page_cross, offset_address);
+        compute_addr_mode_g23(page_cross, address);
+        run_instruction_group3(address, page_cross);
         break;
     }
 
-    tracer(cpu, offset_address, page_cross, original_pc, onaddress_group2);
+    //TODO: check if this is the correct way to call tracer
+    TRACER my_tracer(*this);
+    my_tracer.tracer(offset_address, page_cross, original_pc, onaddress_group2);
     (void)original_pc;
     return 1;
 }
