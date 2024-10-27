@@ -50,6 +50,13 @@ bool CPU::reset()
     Y = 0;
     SP = 0;
     PC = 0;
+    C = 0; // carry
+	Z = 0; // zero
+	I = 0;
+    D = 0;
+    B = 0;
+    O = 0;
+    N = 0;
     for (int i = 0; i < 0xFFFF; i++)
         ram[i] = 0;
     cycles = 0;
@@ -90,73 +97,74 @@ void CPU::run_instruction_group1(uint16_t address, bool page_cross)
 
 void CPU::run_instruction_group2(uint16_t address, bool page_cross, bool accumulator)
 {
-    switch (inst.aaa)
-    {
-    case 0x0:
-        ASL(address, accumulator);
-        break;
-    case 0x1:
-        ROL(address, accumulator);
-        break;
-    case 0x2:
-        LSR(address, accumulator);
-        break;
-    case 0x3:
-        ROR(address, accumulator);
-        break;
-    case 0x4:
-        STX(address);
-        break;
-    case 0x5:
-        LDX(address, page_cross);
-        break;
-    case 0x6:
-        DEC(address);
-        break;
-    case 0x7:
-        INC(address);
-        break;
-    }
+    // switch (inst.aaa)
+    // {
+    // case 0x0:
+    //     ASL(address, accumulator);
+    //     break;
+    // case 0x1:
+    //     ROL(address, accumulator);
+    //     break;
+    // case 0x2:
+    //     LSR(address, accumulator);
+    //     break;
+    // case 0x3:
+    //     ROR(address, accumulator);
+    //     break;
+    // case 0x4:
+    //     STX(address);
+    //     break;
+    // case 0x5:
+    //     LDX(address, page_cross);
+    //     break;
+    // case 0x6:
+    //     DEC(address);
+    //     break;
+    // case 0x7:
+    //     INC(address);
+    //     break;
+    // }
+    return;
 }
 
 void CPU::run_instruction_group3(uint16_t address, bool page_cross)
 {
     uint16_t jump_address = 0;
-    switch (inst.aaa)
-    {
-    case 0x0:
-        printf("INVALID OPCODE \n");
-        break;
-    case 0x1:
-        BIT(address);
-        break;
-    case 0x2:
-        jump_address = read_address_from_pc();
-        JMP_abs(jump_address);
-        break;
-    case 0x3:
-        jump_address = read_address_from_pc();
-        JMP_indirect(jump_address);
-        break;
-    case 0x4:
-        // STY
-        break;
-    case 0x5:
-        // LDY
-        break;
-    case 0x6:
-        // CPY
-        break;
-    case 0x7:
-        // CPX
-        break;
-    }
+    // switch (inst.aaa)
+    // {
+    // case 0x0:
+    //     printf("INVALID OPCODE \n");
+    //     break;
+    // case 0x1:
+    //     BIT(address);
+    //     break;
+    // case 0x2:
+    //     jump_address = read_address_from_pc();
+    //     JMP_abs(jump_address);
+    //     break;
+    // case 0x3:
+    //     jump_address = read_address_from_pc();
+    //     JMP_indirect(jump_address);
+    //     break;
+    // case 0x4:
+    //     // STY
+    //     break;
+    // case 0x5:
+    //     // LDY
+    //     break;
+    // case 0x6:
+    //     // CPY
+    //     break;
+    // case 0x7:
+    //     // CPX
+    //     break;
+    // }
+    return;
 }
 
 int CPU::execute()
 {
     bool onaddress_group2 = false;
-    uint16_t offset_address = 0;
     uint16_t original_pc = PC;
     bool page_cross = false;
 
@@ -213,8 +221,7 @@ int CPU::execute()
     }
 
     //TODO: check if this is the correct way to call tracer
-    TRACER my_tracer(*this);
-    my_tracer.tracer(offset_address, page_cross, original_pc, onaddress_group2);
-    (void)original_pc;
+    //TRACER my_tracer(*this);
+    //my_tracer.tracer(offset_address, page_cross, original_pc, onaddress_group2);
     return 1;
 }

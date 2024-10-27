@@ -2,6 +2,8 @@
 #define cpu_header
 #include <stdint.h>
 
+#define TEST
+
 typedef uint8_t byte;
 
 struct Mem
@@ -19,7 +21,12 @@ struct Instruction
 
 class CPU
 {
+#ifndef TEST
 private:
+#endif 
+#ifdef TEST
+public:
+#endif
 	byte A; // Registrii Accumulator, X, Y
 	byte X;
 	byte Y;
@@ -28,6 +35,7 @@ private:
 	byte ram[65536];
 	size_t cycles;
 
+public:
 	// Cpu Flags
 	byte C : 1; // carry
 	byte Z : 1; // zero
@@ -36,10 +44,28 @@ private:
 	byte B : 1; // break
 	byte O : 1; // overflow
 	byte N : 1; // negative
-
 	struct Instruction inst;
 
-public:
+	byte ram_at(uint16_t address)
+	{	
+		return ram[address];
+	}
+	byte get_A()
+	{
+		return A;
+	}
+	byte get_X()
+	{
+		return X;
+	}
+	byte get_Y()
+	{
+		return Y;
+	}
+	size_t get_cycles()
+	{
+		return cycles;
+	}
 	uint16_t get_pc()
 	{
 		return PC;
@@ -64,6 +90,7 @@ public:
 	bool compute_addr_mode_g23(bool &page_cross, uint16_t &address_to_return);
 
 	// First group of instructions
+	void set_ZN(byte value);
 	uint16_t compute_addr_mode_g1(bool &page_cross);
 	void run_instruction_group1(uint16_t address, bool page_cross);
 	void ORA(uint16_t address, bool page_cross);
@@ -88,7 +115,7 @@ public:
 	void INC(uint16_t address);
 
 	// Third group of instructions
-	void CPU::run_instruction_group3(uint16_t address, bool page_cross);
+	void run_instruction_group3(uint16_t address, bool page_cross);
 	void JMP_abs(uint16_t jump_address);
 	void JMP_indirect(uint16_t jump_address);
 	void BIT(uint16_t address);
@@ -103,6 +130,11 @@ public:
 	{
 	}
 	void tracer(uint16_t address, bool page_cross, uint16_t original_pc, bool onaddress_group2);
+	void print_flags_group1();
+	void trace_instruction_group3(uint16_t address);
+	void trace_instruction_group2(uint16_t address, bool onaddress_group2);
+	void trace_instruction_group1(uint16_t address);
+	uint16_t read_address_tracer(uint16_t address);
 };
 
 #endif
